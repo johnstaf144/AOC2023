@@ -24,7 +24,7 @@ func main() {
 		"nine":  "n9e",
 	}
 
-	file, err := os.Open("../input.txt")
+	file, err := os.Open("../input")
 	if err != nil {
 		log.Fatal(err)
 	}

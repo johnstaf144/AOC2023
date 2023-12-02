@@ -12,7 +12,7 @@ import (
 func main() {
 	result := 0
 
-	file, err := os.Open("../input.txt")
+	file, err := os.Open("../input")
 	if err != nil {
 		log.Fatal(err)
 	}
