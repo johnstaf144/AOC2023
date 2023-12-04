@@ -5,25 +5,19 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
-	"slices"
 	"strconv"
 )
 
-type engine struct {
-	gear_indexes []string
-	is_part      bool
+type Num struct {
+	int_num int
+	i       int
+	start   int
+	j       int
 }
 
 func main() {
 	result := 0
 	board := []string{}
-
-	gear_map := map[string][]int{}
-
-	e := engine{
-		is_part: false,
-	}
 
 	file, err := os.Open("../input")
 	if err != nil {
@@ -36,96 +30,62 @@ func main() {
 		board = append(board, scanner.Text())
 	}
 
-	number_store := ""
+	BOARD_LEN := len(board)
+	LINE_LEN := len(board[0])
 
-	re := regexp.MustCompile(`\*`)
+	nums := []Num{}
 
-	for row_index, row := range board {
-		for char_index := 0; char_index < len(row); char_index++ {
-			char := string(row[char_index])
-			if _, err := strconv.Atoi(char); err == nil {
-				number_store += char
-
-				if row_index == 0 && char_index == 0 { // top left corner
-					e.check_front(board, row_index, char_index, re)
-					e.check_below_right(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-				} else if row_index == 0 && char_index == len(row)-1 { // top right corner
-					e.check_back(board, row_index, char_index, re)
-					e.check_below_right(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-				} else if row_index == len(board)-1 && char_index == len(row)-1 { // bottom right corner (last)
-					e.check_back(board, row_index, char_index, re)
-					e.check_above_left(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-					// if e.is_part {
-					// 	engine_number, _ := strconv.Atoi(number_store)
-					// 	engine_number_list = append(engine_number_list, engine_number)
-					// 	continue
-					// }
-				} else if row_index == len(board)-1 && char_index == 0 { // bottom left corner
-					e.check_front(board, row_index, char_index, re)
-					e.check_above_right(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-				} else if row_index == 0 && char_index != 0 && char_index != len(row)-1 { // top of columns excl corners
-					e.check_front(board, row_index, char_index, re)
-					e.check_back(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-					e.check_below_left(board, row_index, char_index, re)
-					e.check_below_right(board, row_index, char_index, re)
-				} else if row_index == len(board)-1 && char_index != 0 && char_index != len(row)-1 { // bottom of colums exl corners
-					e.check_front(board, row_index, char_index, re)
-					e.check_back(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-					e.check_above_left(board, row_index, char_index, re)
-					e.check_above_right(board, row_index, char_index, re)
-				} else if row_index != 0 && row_index != len(board)-1 && char_index == 0 { // start of row excl corners
-					e.check_front(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-					e.check_above_right(board, row_index, char_index, re)
-					e.check_below_right(board, row_index, char_index, re)
-				} else if row_index != 0 && row_index != len(board)-1 && char_index == len(row)-1 { // end of row excl corners
-					e.check_back(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-					e.check_above_left(board, row_index, char_index, re)
-					e.check_below_left(board, row_index, char_index, re)
-				} else {
-					e.check_front(board, row_index, char_index, re)
-					e.check_back(board, row_index, char_index, re)
-					e.check_above(board, row_index, char_index, re)
-					e.check_below(board, row_index, char_index, re)
-					e.check_above_left(board, row_index, char_index, re)
-					e.check_above_right(board, row_index, char_index, re)
-					e.check_below_left(board, row_index, char_index, re)
-					e.check_below_right(board, row_index, char_index, re)
+	for i := 0; i < BOARD_LEN; i++ {
+		j := 0
+		for j < LINE_LEN {
+			if _, err := strconv.Atoi(string(board[i][j])); err == nil {
+				start := j
+				num := ""
+				for j < LINE_LEN {
+					if _, err := strconv.Atoi(string(board[i][j])); err != nil {
+						break
+					}
+					num += string(board[i][j])
+					j += 1
 				}
+				j -= 1
+				int_num, _ := strconv.Atoi(num)
+				nums = append(
+					nums,
+					Num{
+						int_num: int_num,
+						i:       i,
+						start:   start,
+						j:       j,
+					},
+				)
 			}
+			j += 1
+		}
+	}
 
-			if _, err := strconv.Atoi(char); err != nil {
-				if number_store != "" && e.is_part {
-					engine_number, _ := strconv.Atoi(number_store)
+	gear_map := map[string][]int{}
 
-					for _, gear_index := range e.gear_indexes {
-						if val, isKeyExists := gear_map[gear_index]; isKeyExists {
-							gear_map[gear_index] = append(val, engine_number)
-						} else {
-							gear_map[gear_index] = []int{engine_number}
+	for _, num := range nums {
+		for i := num.i - 1; i <= num.i+1; i++ {
+			if i >= 0 && i < BOARD_LEN {
+				for j := num.start - 1; j <= num.j+1; j++ {
+					if j >= 0 && j < LINE_LEN {
+						if string(board[i][j]) == "*" {
+							gear_index := fmt.Sprintf("%d,%d", i, j)
+							if val, isKeyExists := gear_map[gear_index]; !isKeyExists {
+								gear_map[gear_index] = []int{num.int_num}
+							} else {
+								gear_map[gear_index] = append(val, num.int_num)
+							}
 						}
 					}
-
 				}
-				e.gear_indexes = []string{}
-				number_store = ""
-				e.is_part = false
 			}
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println(gear_map)
 
 	for _, val := range gear_map {
 		if len(val) == 2 {
@@ -133,93 +93,9 @@ func main() {
 		}
 	}
 
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println(result)
-}
-
-func (e *engine) check_front(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index][char_index+1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index, char_index+1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_back(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index][char_index-1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index, char_index-1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_above(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index-1][char_index]
-	board_index_string := fmt.Sprintf("%d,%d", row_index-1, char_index)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_below(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index+1][char_index]
-	board_index_string := fmt.Sprintf("%d,%d", row_index+1, char_index)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_above_left(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index-1][char_index-1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index-1, char_index-1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_above_right(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index-1][char_index+1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index-1, char_index+1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_below_left(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index+1][char_index-1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index+1, char_index-1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
-}
-
-func (e *engine) check_below_right(board []string, row_index int, char_index int, re *regexp.Regexp) {
-	board_index := board[row_index+1][char_index+1]
-	board_index_string := fmt.Sprintf("%d,%d", row_index+1, char_index+1)
-	if re.MatchString(string(board_index)) {
-		if !slices.Contains(e.gear_indexes, board_index_string) {
-			e.gear_indexes = append(e.gear_indexes, board_index_string)
-			e.is_part = true
-		}
-	}
 }
