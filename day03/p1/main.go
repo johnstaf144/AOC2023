@@ -20,7 +20,7 @@ func main() {
 	result := 0
 	board := []string{}
 
-	file, err := os.Open("./input")
+	file, err := os.Open("../input")
 	if err != nil {
 		log.Fatal(err)
 	}
