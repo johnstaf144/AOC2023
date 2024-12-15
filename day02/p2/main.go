@@ -42,7 +42,7 @@ func main() {
 
 				if number_of_balls > min_balls[colour] {
 					min_balls[colour] = number_of_balls
-				}thisistestDaria
+				}
 			}
 		}
 
